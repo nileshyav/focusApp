@@ -1,0 +1,15 @@
+<ul class="todo-list">
+    {% for todo in todos %}
+    <li class="todo-item">
+        <div class="todo-content" hx-post="/toggle/{{ todo.id }}" hx-target="#todo-list">
+            <span>{% if todo.completed %}✅{% else %}⭕{% endif %}</span>
+            <span class="{% if todo.completed %}completed{% endif %}">{{ todo.title }}</span>
+        </div>
+        <button class="btn-delete" hx-delete="/delete/{{ todo.id }}" hx-target="#todo-list">
+            Delete
+        </button>
+    </li>
+    {% else %}
+    <li class="empty-text">No tasks available. Add one above!</li>
+    {% endfor %}
+</ul>

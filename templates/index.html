@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productivity Dashboard - Pomodoro & Todo</title>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(23, 32, 51, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius-lg: 18px;
+            --radius-md: 10px;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.12) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+        }
+
+        .header-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header-title h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .header-title p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .card-header i {
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+
+        .card-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        /* Pomodoro Timer Styles */
+        .pomodoro-card {
+            align-items: center;
+            text-align: center;
+        }
+
+        .mode-selector {
+            display: flex;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 4px;
+            border-radius: 30px;
+            border: 1px solid var(--card-border);
+            margin-bottom: 16px;
+            gap: 4px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Custom Time Input Form */
+        .custom-time-box {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            background: rgba(15, 23, 42, 0.7);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .custom-time-box.show {
+            display: flex;
+        }
+
+        .custom-input {
+            width: 70px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 0.9rem;
+            text-align: center;
+            outline: none;
+        }
+
+        .btn-set-custom {
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .timer-display {
+            font-size: 4.8rem;
+            font-weight: 800;
+            font-family: monospace;
+            letter-spacing: -2px;
+            margin: 10px 0 24px 0;
+            color: var(--text-main);
+            text-shadow: 0 0 30px rgba(99, 102, 241, 0.25);
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .btn-control {
+            padding: 12px 28px;
+            border-radius: var(--radius-md);
+            border: none;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-start {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-start:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .session-info {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+        }
+
+        .session-info strong {
+            color: var(--primary);
+        }
+
+        /* Todo Form & List Styles */
+        .todo-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(15, 23, 42, 0.8);
+            color: white;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-add {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover {
+            background: var(--primary-hover);
+        }
+
+        .todo-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            max-height: 420px;
+            padding-right: 4px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--card-border);
+            transition: all 0.2s ease;
+        }
+
+        .todo-item:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(15, 23, 42, 0.85);
+        }
+
+        .todo-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            flex: 1;
+            font-size: 0.95rem;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fee2e2;
+        }
+
+        .empty-text {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 30px;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 860px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header-title">
+        <h1>Focus & Task Workspace</h1>
+        <p>Pomodoro timer on left • FastAPI & HTMX tasks on right</p>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- LEFT COLUMN: Pomodoro Timer -->
+        <section class="card pomodoro-card">
+            <div class="card-header" style="width: 100%;">
+                <i class="fa-regular fa-clock"></i>
+                <h2>Pomodoro Timer</h2>
+            </div>
+
+            <!-- Modes -->
+            <div class="mode-selector">
+                <button class="mode-btn active" onclick="setMode('focus', 25, this)">Focus (25m)</button>
+                <button class="mode-btn" onclick="setMode('shortBreak', 5, this)">Short Break (5m)</button>
+                <button class="mode-btn" onclick="setMode('longBreak', 15, this)">Long Break (15m)</button>
+                <button class="mode-btn" onclick="toggleCustomMode(this)">Custom ⚙️</button>
+            </div>
+
+            <!-- Custom Minutes Form -->
+            <div class="custom-time-box" id="custom-box">
+                <label for="custom-minutes" style="font-size: 0.85rem; color: var(--text-muted);">Minutes:</label>
+                <input type="number" id="custom-minutes" class="custom-input" min="1" max="180" value="10">
+                <button class="btn-set-custom" onclick="applyCustomTime()">Apply</button>
+            </div>
+
+            <!-- Display -->
+            <div class="timer-display" id="timer-display">25:00</div>
+
+            <!-- Controls -->
+            <div class="timer-controls">
+                <button class="btn-control btn-start" id="start-btn" onclick="toggleTimer()">
+                    <i class="fa-solid fa-play" id="start-icon"></i> <span id="start-text">Start</span>
+                </button>
+                <button class="btn-control btn-secondary" onclick="resetTimer()">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+            </div>
+
+            <!-- Session Stats -->
+            <div class="session-info">
+                <i class="fa-solid fa-fire"></i> Completed Sessions: <strong id="completed-count">0</strong>
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: Todo List -->
+        <section class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-list-check"></i>
+                <h2>Todo Tasks</h2>
+            </div>
+
+            <form hx-post="/add" 
+                  hx-target="#todo-list" 
+                  hx-on::after-request="this.reset()" 
+                  class="todo-form">
+                <input type="text" 
+                       name="title" 
+                       class="form-input" 
+                       placeholder="Add a new task..." 
+                       required 
+                       autocomplete="off">
+                <button type="submit" class="btn-add">
+                    <i class="fa-solid fa-plus"></i> Add
+                </button>
+            </form>
+
+            <div id="todo-list">
+                {% include 'partials/todo_list.html' %}
+            </div>
+        </section>
+    </div>
+
+    <!-- Pomodoro Logic Script -->
+    <script>
+        let timerInterval = null;
+        let isRunning = false;
+        let currentMode = 'focus';
+        let defaultTime = 25 * 60; // default 25 minutes
+        let timeRemaining = defaultTime;
+        let completedSessions = 0;
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const formatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timer-display').innerText = formatted;
+            document.title = `${formatted} - ${currentMode === 'focus' ? 'Focusing' : 'Break'}`;
+        }
+
+        function setMode(mode, minutes, element) {
+            pauseTimer();
+            currentMode = mode;
+            defaultTime = minutes * 60;
+            timeRemaining = defaultTime;
+            
+            document.getElementById('custom-box').classList.remove('show');
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            if (element) element.classList.add('active');
+
+            const root = document.documentElement;
+            if (mode === 'focus') {
+                root.style.setProperty('--primary', '#6366f1');
+                root.style.setProperty('--primary-hover', '#4f46e5');
+            } else if (mode === 'shortBreak') {
+                root.style.setProperty('--primary', '#10b981');
+                root.style.setProperty('--primary-hover', '#059669');
+            } else if (mode === 'longBreak') {
+                root.style.setProperty('--primary', '#06b6d4');
+                root.style.setProperty('--primary-hover', '#0891b2');
+            } else if (mode === 'custom') {
+                root.style.setProperty('--primary', '#ec4899');
+                root.style.setProperty('--primary-hover', '#db2777');
+            }
+
+            updateDisplay();
+        }
+
+        function toggleCustomMode(element) {
+            const customBox = document.getElementById('custom-box');
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            customBox.classList.add('show');
+            applyCustomTime();
+        }
+
+        function applyCustomTime() {
+            const minutesInput = document.getElementById('custom-minutes');
+            let mins = parseInt(minutesInput.value, 10);
+            if (isNaN(mins) || mins < 1) mins = 1;
+            if (mins > 180) mins = 180;
+            minutesInput.value = mins;
+
+            setMode('custom', mins, document.querySelector('.mode-btn:last-child'));
+            document.getElementById('custom-box').classList.add('show');
+        }
+
+        function toggleTimer() {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            isRunning = true;
+            document.getElementById('start-text').innerText = 'Pause';
+            document.getElementById('start-icon').className = 'fa-solid fa-pause';
+
+            timerInterval = setInterval(() => {
+                if (timeRemaining > 0) {
+                    timeRemaining--;
+                    updateDisplay();
+                } else {
+                    pauseTimer();
+                    if (currentMode === 'focus' || currentMode === 'custom') {
+                        completedSessions++;
+                        document.getElementById('completed-count').innerText = completedSessions;
+                        alert('🎉 Timer completed!');
+                    } else {
+                        alert('⏰ Break is over!');
+                    }
+                    resetTimer();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('start-text').innerText = 'Start';
+            document.getElementById('start-icon').className = 'fa-solid fa-play';
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            timeRemaining = defaultTime;
+            updateDisplay();
+        }
+
+        updateDisplay();
+    </script>
+</body>
+</html>
