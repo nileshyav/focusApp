@@ -21,20 +21,6 @@ def init_db():
         )
     """)
     
-    # Populate default sample tasks if empty
-    cursor.execute("SELECT COUNT(*) FROM todos")
-    count = cursor.fetchone()[0]
-    if count == 0:
-        sample_todos = [
-            ("Explore FastAPI backend endpoints", 1, "high"),
-            ("Build dynamic UI with HTMX partials", 0, "high"),
-            ("Add priority badges and inline editing", 0, "medium"),
-            ("Style smooth glassmorphism dark theme", 1, "low")
-        ]
-        cursor.executemany(
-            "INSERT INTO todos (title, completed, priority) VALUES (?, ?, ?)",
-            sample_todos
-        )
     conn.commit()
     conn.close()
 

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Report Summary - Productivity Dashboard</title>
+
+    <!-- Tailwind CSS + DaisyUI CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Chart.js for Interactive Performance Graphics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Zoom Plugin for Panning and Zooming -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Glassmorphism effects */
+        .backdrop-blur-xl {
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+
+        /* Component Hover Index Badges */
+        .dev-badge {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 3.5px;
+            border-radius: 9999px;
+            background: #6366f1;
+            color: #ffffff;
+            font-size: 8.5px;
+            font-weight: 800;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            box-shadow: 0 0 6px rgba(99, 102, 241, 0.6);
+            user-select: none;
+            line-height: 1;
+            flex-shrink: 0;
+            cursor: help;
+            transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .dev-badge:hover {
+            transform: scale(1.3);
+            background: #4f46e5;
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.9);
+        }
+
+        /* Active Component Hover Index displays all badges */
+        body.show-component-index .dev-badge {
+            display: inline-flex !important;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-950 min-h-screen text-slate-100 p-4 md:p-8 flex flex-col items-center relative overflow-x-hidden">
+
+    <!-- ========================================== -->
+    <!-- [①] HEADER TOOLBAR COMPONENT               -->
+    <!-- ========================================== -->
+    <header class="w-full flex flex-col md:flex-row items-center justify-between gap-4 mb-8 p-6 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
+        <div class="flex items-center gap-3">
+            <span class="dev-badge text-xs" title="[①] Header Toolbar Component">1</span>
+            <div class="p-3 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-chart-line text-2xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
+                    Performance Report Summary
+                </h1>
+                <p class="text-xs md:text-sm text-slate-400">
+                    Weekly Pomodoro Study Analytics • Focus Trends & Tracked Sessions
+                </p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- [①.D] Dashboard Navigation Link -->
+            <div class="flex items-center gap-1">
+                <span class="dev-badge" title="[①.D] Dashboard Navigation Link">1D</span>
+                <a href="/" 
+                   class="btn btn-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border-none shadow-md shadow-indigo-500/20 text-xs gap-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back to Dashboard</span>
+                </a>
+            </div>
+
+            <!-- [①.B] UI Theme Selector Dropdown -->
+            <div class="flex items-center gap-2 bg-slate-900/80 p-2 rounded-xl border border-white/10 shadow-lg">
+                <span class="dev-badge" title="[①.B] UI Theme Selector Dropdown">1B</span>
+                <i class="fa-solid fa-palette text-indigo-400"></i>
+                <select id="theme-selector" class="select select-sm select-bordered select-primary text-xs" onchange="changeUITheme(this.value)">
+                    <option value="night">🌙 Night Glass</option>
+                    <option value="dracula">🧛 Dracula Dark</option>
+                    <option value="dim">🌲 Nordic Dim</option>
+                    <option value="cyberpunk">⚡ Cyberpunk Glow</option>
+                    <option value="synthwave">🌆 Synthwave Retro</option>
+                    <option value="emerald">💚 Emerald Mint</option>
+                </select>
+            </div>
+
+            <!-- [①.C] Component Hover Index Toggle Button -->
+            <div class="flex items-center gap-1">
+                <span class="dev-badge" title="[①.C] Component Hover Index Toggle Button">1C</span>
+                <button id="component-index-toggle-btn" 
+                        onclick="toggleComponentIndex()" 
+                        class="btn btn-sm btn-outline border-white/20 hover:bg-white/10 text-xs gap-2"
+                        title="Toggle component hover index numbering badges ON/OFF">
+                    <i class="fa-solid fa-hashtag text-indigo-400"></i>
+                    <span id="component-index-btn-text">Component Index: OFF</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- [⑤] PERFORMANCE REPORT MAIN CONTAINER       -->
+    <!-- ========================================== -->
+    <main class="w-full flex flex-col gap-8 mb-12">
+
+        <!-- -------------------------------------- -->
+        <!-- [⑤.A] KEY METRICS STAT GRID            -->
+        <!-- -------------------------------------- -->
+        <section class="relative">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="dev-badge" title="[⑤.A] Key Metrics Stat Grid">5A</span>
+                <h2 class="text-sm font-bold uppercase tracking-wider text-indigo-400">Overview Highlights</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Stat Card 1: Weekly Total Focus Hours -->
+                <div class="card bg-slate-900/70 backdrop-blur-xl border border-white/10 p-5 shadow-xl hover:border-indigo-500/50 transition">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold text-slate-400">Weekly Focus Time</span>
+                        <div class="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                            <i class="fa-solid fa-clock text-base"></i>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-black text-white tracking-tight">
+                        {{ report.this_week_hours_sum }} <span class="text-sm font-normal text-slate-400">hrs</span>
+                    </div>
+                    <div class="mt-2 text-xs text-emerald-400 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                        <span>{{ report.weekly_trend_pct }}% vs last week</span>
+                    </div>
+                </div>
+
+                <!-- Stat Card 2: Tasks Completed -->
+                <div class="card bg-slate-900/70 backdrop-blur-xl border border-white/10 p-5 shadow-xl hover:border-emerald-500/50 transition">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold text-slate-400">Tasks Completed</span>
+                        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                            <i class="fa-solid fa-circle-check text-base"></i>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-black text-white tracking-tight">
+                        {{ report.total_completed_tasks }} <span class="text-sm font-normal text-slate-400">tasks</span>
+                    </div>
+                    <div class="mt-2 text-xs text-emerald-400">
+                        🎯 Active productivity log
+                    </div>
+                </div>
+
+                <!-- Stat Card 3: Daily Average -->
+                <div class="card bg-slate-900/70 backdrop-blur-xl border border-white/10 p-5 shadow-xl hover:border-amber-500/50 transition">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold text-slate-400">Daily Average Focus</span>
+                        <div class="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+                            <i class="fa-solid fa-bolt text-base"></i>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-black text-white tracking-tight">
+                        {{ report.avg_daily_hours }} <span class="text-sm font-normal text-slate-400">hrs/day</span>
+                    </div>
+                    <div class="mt-2 text-xs text-amber-300">
+                        🔥 Daily focus pacing
+                    </div>
+                </div>
+
+                <!-- Stat Card 4: Average Karma Score -->
+                <div class="card bg-slate-900/70 backdrop-blur-xl border border-white/10 p-5 shadow-xl hover:border-purple-500/50 transition">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold text-slate-400">Average Karma Score</span>
+                        <div class="w-9 h-9 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                            <i class="fa-solid fa-star text-base"></i>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-black text-white tracking-tight">
+                        {{ report.avg_karma_score }} <span class="text-sm font-normal text-slate-400">/ 5.0</span>
+                    </div>
+                    <div class="mt-2 text-xs text-purple-300">
+                        ⭐ Average task karma rating
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- -------------------------------------- -->
+        <!-- [⑤.E] TOTAL STUDY TIME PER WEEK CHART  -->
+        <!-- -------------------------------------- -->
+        <section class="card bg-slate-900/70 backdrop-blur-xl border border-white/10 p-6 shadow-2xl">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between border-b border-white/10 pb-4 mb-6 gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="dev-badge" title="[⑤.E] Total Study Time Per Week Chart (Fixed Y-Axis Horizontal Scroll)">5E</span>
+                    <i class="fa-solid fa-chart-simple text-purple-400 text-lg"></i>
+                    <div>
+                        <h2 class="text-lg font-bold">Total Time Studied Per Week (Tracked Pomodoros)</h2>
+                        <p class="text-xs text-slate-400">↔️ Drag left/right or scroll wheel to navigate 6 months of data (Y-Axis Fixed)</p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Zoom & Pan Controls -->
+                    <div class="join border border-white/10 rounded-xl p-1 bg-slate-950/80 shadow-inner">
+                        <button onclick="zoomInChart()" 
+                                class="btn btn-xs join-item btn-ghost text-slate-300 hover:text-white gap-1 font-semibold"
+                                title="Zoom in to inspect fewer weeks in detail">
+                            <i class="fa-solid fa-magnifying-glass-plus text-xs text-indigo-400"></i>
+                            <span>Zoom In</span>
+                        </button>
+                        <button onclick="zoomOutChart()" 
+                                class="btn btn-xs join-item btn-ghost text-slate-300 hover:text-white gap-1 font-semibold"
+                                title="Zoom out to reveal more weeks">
+                            <i class="fa-solid fa-magnifying-glass-minus text-xs text-purple-400"></i>
+                            <span>Zoom Out</span>
+                        </button>
+                        <button onclick="showHolisticAllWeeks()" 
+                                class="btn btn-xs join-item btn-ghost text-emerald-400 hover:text-emerald-300 gap-1 font-semibold"
+                                title="Fit all 26 weeks (6 months) in a single holistic view">
+                            <i class="fa-solid fa-expand text-xs"></i>
+                            <span>Fit All View</span>
+                        </button>
+                    </div>
+
+                    <!-- Chart Type Selector Buttons -->
+                    <div class="join border border-white/10 rounded-xl p-1 bg-slate-950/80 shadow-inner">
+                        <button id="chart-btn-bar" 
+                                onclick="switchWeeklyChartType('bar')" 
+                                class="btn btn-xs join-item btn-primary gap-1 font-semibold">
+                            <i class="fa-solid fa-chart-column text-xs"></i>
+                            <span>Bar Chart</span>
+                        </button>
+                        <button id="chart-btn-line" 
+                                onclick="switchWeeklyChartType('line')" 
+                                class="btn btn-xs join-item btn-ghost text-slate-400 hover:text-white gap-1 font-semibold">
+                            <i class="fa-solid fa-chart-line text-xs"></i>
+                            <span>Gradient Line</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="w-full h-[320px] relative">
+                <canvas id="weeklyStudyTimeChart"></canvas>
+            </div>
+        </section>
+
+        <!-- -------------------------------------- -->
+        <!-- [⑤.B] WEEKLY & PRIORITY CHARTS ROW     -->
+        <!-- -------------------------------------- -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- [⑤.B] Weekly Performance Comparison Chart (2 Cols) -->
+            <section class="card bg-slate-900/70 backdrop-blur-xl border border-white/10 p-6 shadow-2xl lg:col-span-2">
+                <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                    <div class="flex items-center gap-2">
+                        <span class="dev-badge" title="[⑤.B] Weekly Performance Comparison Chart">5B</span>
+                        <i class="fa-solid fa-chart-column text-indigo-400 text-lg"></i>
+                        <h2 class="text-lg font-bold">Weekly Performance Comparison (Mon - Sun)</h2>
+                    </div>
+                    <span class="text-xs text-slate-400 bg-slate-800/80 px-3 py-1 rounded-full border border-white/10">
+                        This Week: <strong class="text-indigo-400">{{ report.this_week_hours_sum }} hrs</strong>
+                    </span>
+                </div>
+                
+                <div class="w-full h-[300px]">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </section>
+
+            <!-- [⑤.D] Task Priority Allocation Chart (1 Col) -->
+            <section class="card bg-slate-900/70 backdrop-blur-xl border border-white/10 p-6 shadow-2xl flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-2 border-b border-white/10 pb-4 mb-6">
+                        <span class="dev-badge" title="[⑤.D] Task Priority Distribution">5D</span>
+                        <i class="fa-solid fa-chart-pie text-indigo-400 text-lg"></i>
+                        <h2 class="text-lg font-bold">Priority Allocation</h2>
+                    </div>
+                    
+                    <div class="w-full h-[220px] flex items-center justify-center">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/10 text-center">
+                    <div class="bg-rose-500/10 border border-rose-500/20 p-2 rounded-xl">
+                        <div class="text-xs text-rose-400 font-bold">High</div>
+                        <div class="text-lg font-black text-white">{{ report.priority_stats.high }}</div>
+                    </div>
+                    <div class="bg-amber-500/10 border border-amber-500/20 p-2 rounded-xl">
+                        <div class="text-xs text-amber-400 font-bold">Medium</div>
+                        <div class="text-lg font-black text-white">{{ report.priority_stats.medium }}</div>
+                    </div>
+                    <div class="bg-emerald-500/10 border border-emerald-500/20 p-2 rounded-xl">
+                        <div class="text-xs text-emerald-400 font-bold">Low</div>
+                        <div class="text-lg font-black text-white">{{ report.priority_stats.low }}</div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- JAVASCRIPT & CHARTS INITIALIZATION -->
+    <script>
+        /* COMPONENT HOVER INDEX TOGGLE SYSTEM */
+        let isComponentIndexActive = localStorage.getItem('component_hover_index_active') === 'true';
+
+        function toggleComponentIndex() {
+            isComponentIndexActive = !isComponentIndexActive;
+            localStorage.setItem('component_hover_index_active', isComponentIndexActive);
+            applyComponentIndexState();
+        }
+
+        function applyComponentIndexState() {
+            const btn = document.getElementById('component-index-toggle-btn');
+            const btnText = document.getElementById('component-index-btn-text');
+
+            if (isComponentIndexActive) {
+                document.body.classList.add('show-component-index');
+                if (btn) {
+                    btn.classList.remove('btn-outline');
+                    btn.classList.add('btn-primary');
+                    btnText.innerText = 'Component Index: ON';
+                }
+            } else {
+                document.body.classList.remove('show-component-index');
+                if (btn) {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline');
+                    btnText.innerText = 'Component Index: OFF';
+                }
+            }
+        }
+
+        applyComponentIndexState();
+
+        /* THEME SELECTOR SYSTEM */
+        const savedTheme = localStorage.getItem('pomodoro_ui_theme') || 'night';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const themeSelector = document.getElementById('theme-selector');
+        if (themeSelector) {
+            themeSelector.value = savedTheme;
+        }
+
+        function changeUITheme(themeName) {
+            document.documentElement.setAttribute('data-theme', themeName);
+            localStorage.setItem('pomodoro_ui_theme', themeName);
+        }
+
+        /* CHART 1: TOTAL STUDY TIME PER WEEK (COMPONENT 5E - TOGGLEABLE BAR / GRADIENT LINE CHART WITH FIXED Y-AXIS HORIZONTAL SCROLL) */
+        const ctxWeeklyStudy = document.getElementById('weeklyStudyTimeChart').getContext('2d');
+        const weekLabels = {{ report.weeks_data | map(attribute='week_label') | list | tojson }};
+        const weekHours = {{ report.weeks_data | map(attribute='hours') | list | tojson }};
+
+        // Create smooth linear gradient for Line Chart fill
+        const lineGradientFill = ctxWeeklyStudy.createLinearGradient(0, 0, 0, 300);
+        lineGradientFill.addColorStop(0, 'rgba(168, 85, 247, 0.45)');
+        lineGradientFill.addColorStop(0.5, 'rgba(129, 140, 248, 0.2)');
+        lineGradientFill.addColorStop(1, 'rgba(15, 23, 42, 0.0)');
+
+        let currentChartType = 'bar';
+
+        function getDatasetConfig(type) {
+            if (type === 'line') {
+                return {
+                    label: 'Total Hours Studied',
+                    data: weekHours,
+                    type: 'line',
+                    fill: true,
+                    backgroundColor: lineGradientFill,
+                    borderColor: '#c084fc',
+                    borderWidth: 3.5,
+                    tension: 0.4,
+                    pointBackgroundColor: '#818cf8',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    pointHoverBackgroundColor: '#c084fc'
+                };
+            } else {
+                return {
+                    label: 'Total Hours Studied',
+                    data: weekHours,
+                    type: 'bar',
+                    backgroundColor: weekHours.map((_, idx) => 
+                        idx === weekHours.length - 1 ? 'rgba(99, 102, 241, 0.95)' : 'rgba(168, 85, 247, 0.75)'
+                    ),
+                    borderColor: weekHours.map((_, idx) => 
+                        idx === weekHours.length - 1 ? '#818cf8' : '#c084fc'
+                    ),
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    barThickness: 28
+                };
+            }
+        }
+
+        function buildChartOptions() {
+            const maxHours = Math.max(...weekHours, 10);
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { color: '#cbd5e1', font: { family: 'Inter', weight: '600' } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` Focus Time: ${context.raw} hrs`;
+                            }
+                        }
+                    },
+                    zoom: {
+                        limits: {
+                            x: { min: 0, max: weekLabels.length - 1, minRange: 3 }
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: 'x', // LOCK PAN EXCLUSIVELY TO X-AXIS -> Y-AXIS STAYS 100% FIXED
+                            threshold: 5
+                        },
+                        zoom: {
+                            wheel: { enabled: true },
+                            pinch: { enabled: true },
+                            mode: 'x' // LOCK ZOOM EXCLUSIVELY TO X-AXIS
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        min: Math.max(0, weekLabels.length - 8), // SHOW LAST 8 WEEKS INITIALLY FOR CLEAN SCROLLING
+                        max: weekLabels.length - 1,
+                        ticks: { 
+                            color: '#cbd5e1', 
+                            font: { family: 'Inter', weight: '600' },
+                            maxRotation: 45,
+                            minRotation: 0
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    },
+                    y: {
+                        min: 0,
+                        suggestedMax: Math.ceil(maxHours * 1.15), // KEEP Y-AXIS SCALE ABSOLUTELY FIXED
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { display: true, text: 'Hours Studied (hrs)', color: '#94a3b8' }
+                    }
+                }
+            };
+        }
+
+        let weeklyStudyChart = new Chart(ctxWeeklyStudy, {
+            type: 'bar',
+            data: {
+                labels: weekLabels,
+                datasets: [getDatasetConfig('bar')]
+            },
+            options: buildChartOptions()
+        });
+
+        function switchWeeklyChartType(type) {
+            if (currentChartType === type) return;
+            currentChartType = type;
+
+            const btnBar = document.getElementById('chart-btn-bar');
+            const btnLine = document.getElementById('chart-btn-line');
+
+            if (type === 'line') {
+                btnLine.classList.remove('btn-ghost', 'text-slate-400');
+                btnLine.classList.add('btn-primary');
+                btnBar.classList.remove('btn-primary');
+                btnBar.classList.add('btn-ghost', 'text-slate-400');
+            } else {
+                btnBar.classList.remove('btn-ghost', 'text-slate-400');
+                btnBar.classList.add('btn-primary');
+                btnLine.classList.remove('btn-primary');
+                btnLine.classList.add('btn-ghost', 'text-slate-400');
+            }
+
+            weeklyStudyChart.destroy();
+            weeklyStudyChart = new Chart(ctxWeeklyStudy, {
+                type: type,
+                data: {
+                    labels: weekLabels,
+                    datasets: [getDatasetConfig(type)]
+                },
+                options: buildChartOptions()
+            });
+        }
+
+        function showHolisticAllWeeks() {
+            if (weeklyStudyChart) {
+                weeklyStudyChart.options.scales.x.min = 0;
+                weeklyStudyChart.options.scales.x.max = weekLabels.length - 1;
+                weeklyStudyChart.update();
+            }
+        }
+
+        /* CURSOR FOCAL-POINT CENTERED ZOOM & DRAG PANNING SYSTEM FOR COMPONENT 5E */
+        const canvasEl = document.getElementById('weeklyStudyTimeChart');
+        let isDraggingChart = false;
+        let dragStartX = 0;
+        let startMinIndex = 0;
+        let startMaxIndex = 0;
+        let hoverFocalIndex = (weekLabels.length - 1) / 2;
+
+        canvasEl.style.cursor = 'grab';
+
+        // Track hover position to find target date under mouse cursor
+        canvasEl.addEventListener('mousemove', (e) => {
+            const rect = canvasEl.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const chartArea = weeklyStudyChart.chartArea;
+            
+            if (chartArea && mouseX >= chartArea.left && mouseX <= chartArea.right) {
+                const ratio = (mouseX - chartArea.left) / (chartArea.right - chartArea.left);
+                const currentMin = weeklyStudyChart.scales.x.min;
+                const currentMax = weeklyStudyChart.scales.x.max;
+                hoverFocalIndex = currentMin + ratio * (currentMax - currentMin);
+            }
+        });
+
+        // Mouse Click + Drag Panning
+        canvasEl.addEventListener('mousedown', (e) => {
+            isDraggingChart = true;
+            dragStartX = e.clientX;
+            canvasEl.style.cursor = 'grabbing';
+
+            const xAxis = weeklyStudyChart.scales.x;
+            startMinIndex = xAxis.min;
+            startMaxIndex = xAxis.max;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingChart) return;
+            const deltaX = e.clientX - dragStartX;
+            const visibleCount = Math.max(1, startMaxIndex - startMinIndex);
+            const chartWidth = canvasEl.clientWidth || 800;
+            const pixelsPerUnit = chartWidth / visibleCount;
+            
+            const shiftUnits = -deltaX / (pixelsPerUnit * 0.7);
+            
+            let newMin = startMinIndex + shiftUnits;
+            let newMax = startMaxIndex + shiftUnits;
+
+            if (newMin < 0) {
+                newMin = 0;
+                newMax = visibleCount;
+            }
+            if (newMax > weekLabels.length - 1) {
+                newMax = weekLabels.length - 1;
+                newMin = Math.max(0, newMax - visibleCount);
+            }
+
+            if (weeklyStudyChart.options.scales.x.min !== newMin || weeklyStudyChart.options.scales.x.max !== newMax) {
+                weeklyStudyChart.options.scales.x.min = newMin;
+                weeklyStudyChart.options.scales.x.max = newMax;
+                weeklyStudyChart.update('none');
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isDraggingChart) {
+                isDraggingChart = false;
+                canvasEl.style.cursor = 'grab';
+                weeklyStudyChart.update();
+            }
+        });
+
+        // Focal Point Mouse Wheel Zoom (Pins target date under mouse cursor)
+        canvasEl.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY < 0 ? 0.82 : 1.22;
+            performFocalZoom(zoomFactor);
+        }, { passive: false });
+
+        function performFocalZoom(zoomFactor) {
+            if (!weeklyStudyChart) return;
+            
+            const currentMin = weeklyStudyChart.scales.x.min;
+            const currentMax = weeklyStudyChart.scales.x.max;
+            const currentRange = currentMax - currentMin;
+            
+            let newRange = currentRange * zoomFactor;
+            if (newRange < 2.5) newRange = 2.5;
+            if (newRange > weekLabels.length - 1) newRange = weekLabels.length - 1;
+
+            // Pin the focal point date under mouse cursor
+            const focalRatio = currentRange > 0 ? (hoverFocalIndex - currentMin) / currentRange : 0.5;
+            let newMin = hoverFocalIndex - (focalRatio * newRange);
+            let newMax = newMin + newRange;
+
+            if (newMin < 0) {
+                newMin = 0;
+                newMax = newRange;
+            }
+            if (newMax > weekLabels.length - 1) {
+                newMax = weekLabels.length - 1;
+                newMin = Math.max(0, newMax - newRange);
+            }
+
+            weeklyStudyChart.options.scales.x.min = newMin;
+            weeklyStudyChart.options.scales.x.max = newMax;
+            weeklyStudyChart.update('none');
+        }
+
+        function zoomInChart() {
+            performFocalZoom(0.78);
+        }
+
+        function zoomOutChart() {
+            performFocalZoom(1.28);
+        }
+
+        /* CHART 2: WEEKLY PERFORMANCE BAR CHART */
+        const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
+        new Chart(ctxWeekly, {
+            type: 'bar',
+            data: {
+                labels: {{ report.days_of_week | tojson }},
+                datasets: [
+                    {
+                        label: 'This Week (Hours)',
+                        data: {{ report.current_week_hours | tojson }},
+                        backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                        borderColor: '#6366f1',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Last Week (Hours)',
+                        data: {{ report.previous_week_hours | tojson }},
+                        backgroundColor: 'rgba(148, 163, 184, 0.3)',
+                        borderColor: '#94a3b8',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#cbd5e1', font: { family: 'Inter', weight: '600' } }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                    },
+                    y: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        title: { display: true, text: 'Hours Spent', color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+
+        /* CHART 3: PRIORITY ALLOCATION DOUGHNUT CHART */
+        const ctxPriority = document.getElementById('priorityChart').getContext('2d');
+        new Chart(ctxPriority, {
+            type: 'doughnut',
+            data: {
+                labels: ['High Priority', 'Medium Priority', 'Low Priority'],
+                datasets: [{
+                    data: [
+                        {{ report.priority_stats.high }}, 
+                        {{ report.priority_stats.medium }}, 
+                        {{ report.priority_stats.low }}
+                    ],
+                    backgroundColor: [
+                        '#ef4444',
+                        '#f59e0b',
+                        '#10b981'
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#cbd5e1', font: { family: 'Inter', weight: '600' }, boxWidth: 12 }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    </script>
+</body>
+
+</html>

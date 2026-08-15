@@ -1,0 +1,216 @@
+{% if todo %}
+<div class="flex flex-col gap-4">
+    <!-- Modal Header: Task Title & Status Badge [4 & 4A] -->
+    <div class="border-b border-white/10 pb-4">
+        <div class="flex items-start justify-between gap-3 mb-2">
+            <h3 class="text-xl font-bold text-slate-100 flex items-start gap-2 flex-1 min-w-0 break-all sm:break-words">
+                <span class="dev-badge text-xs mt-1" title="[④] Task Description Modal Component">4</span>
+                <span class="dev-badge mt-1" title="[④.A] Task Details Header & Status">4A</span>
+                <i class="fa-solid fa-align-left text-indigo-400 mt-1 flex-shrink-0"></i>
+                <span class="break-all sm:break-words leading-tight">{{ todo.title }}</span>
+            </h3>
+            <span class="badge {% if todo.completed %}badge-success{% else %}badge-warning{% endif %} text-xs font-semibold flex-shrink-0 self-start mt-0.5 shadow-sm">
+                {% if todo.completed %}Completed{% else %}In Progress{% endif %}
+            </span>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+            <span class="flex items-center gap-1 text-indigo-300">
+                <i class="fa-regular fa-clock"></i> Total Time Focused: 
+                <strong class="font-mono">
+                    {% if todo.time_spent and todo.time_spent >= 60 %}
+                        {{ todo.time_spent // 60 }}m {{ todo.time_spent % 60 }}s
+                    {% else %}
+                        {{ todo.time_spent or 0 }}s
+                    {% endif %}
+                </strong>
+            </span>
+            {% if todo.deadline_info and todo.deadline_info.text != 'Set deadline' %}
+            <span class="badge badge-xs text-[11px] font-semibold gap-1 py-2 px-2.5 border rounded-md {{ todo.deadline_info.class }}">
+                <i class="fa-regular fa-calendar-days text-[10px]"></i> {{ todo.deadline_info.text }}
+            </span>
+            {% endif %}
+            {% if todo.karma and todo.karma > 0 %}
+            <span class="badge badge-xs text-[11px] font-semibold gap-1 py-2 px-2.5 border rounded-md bg-purple-500/20 text-purple-300 border-purple-500/40">
+                <i class="fa-solid fa-star text-[10px] text-amber-400"></i> Karma: {{ todo.karma }}/5
+            </span>
+            {% endif %}
+            {% if todo.checklist_info and todo.checklist_info.has_checklist %}
+            <span class="badge badge-xs text-[11px] font-semibold gap-1 py-2 px-2.5 border rounded-md bg-indigo-500/20 text-indigo-300 border-indigo-500/40">
+                <i class="fa-solid fa-list-check text-[10px]"></i> Checklist: {{ todo.checklist_info.completed_count }}/{{ todo.checklist_info.total }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Success Feedback Notification -->
+    {% if saved_success %}
+    <div class="alert alert-success bg-emerald-500/20 border-emerald-500/40 text-emerald-200 text-xs py-2 px-3">
+        <i class="fa-solid fa-circle-check"></i> Task details saved successfully!
+    </div>
+    {% endif %}
+
+    <!-- Edit Task Form: Title, Description, Priority, Deadline & Karma -->
+    <form hx-post="/update-description/{{ todo.id }}" 
+          hx-target="#task-detail-content" 
+          onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); this.requestSubmit(); }"
+          class="flex flex-col gap-4">
+        
+        <!-- Vertical Stack: Editable Title [4A], Priority [4B], Deadline [4E], Karma Score [4F] -->
+        <div class="flex flex-col gap-2.5">
+            <!-- Task Title Editable Input [4A] -->
+            <div class="flex flex-col gap-1.5 bg-slate-950/60 p-3 rounded-xl border border-white/10">
+                <label for="task-title-input" class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                        <span class="dev-badge" title="[④.A] Editable Task Title Input">4A</span>
+                        <i class="fa-solid fa-pen-to-square text-indigo-400"></i>
+                        <span>Task Title:</span>
+                    </span>
+                    <span class="text-[11px] text-slate-500">Edit title</span>
+                </label>
+                <input type="text" 
+                       id="task-title-input"
+                       name="title" 
+                       value="{{ todo.title }}" 
+                       class="input input-sm input-bordered input-primary w-full text-sm font-bold bg-slate-900 text-slate-100 focus:outline-none" 
+                       required 
+                       autocomplete="off" />
+            </div>
+
+            <!-- Priority Selector [4B] -->
+            <div class="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-white/10">
+                <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <span class="dev-badge" title="[④.B] Modal Priority Dropdown">4B</span>
+                    <i class="fa-solid fa-flag text-indigo-400"></i> Task Priority:
+                </label>
+                <select name="priority" class="select select-sm select-bordered select-primary text-xs font-bold bg-slate-900">
+                    <option value="high" {% if todo.priority == 'high' %}selected{% endif %}>🔥 High Priority</option>
+                    <option value="medium" {% if not todo.priority or todo.priority == 'medium' %}selected{% endif %}>⚡ Medium Priority</option>
+                    <option value="low" {% if todo.priority == 'low' %}selected{% endif %}>🌱 Low Priority</option>
+                </select>
+            </div>
+
+            <!-- Deadline Date Picker [4E] -->
+            <div class="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-white/10">
+                <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <span class="dev-badge" title="[④.E] Modal Deadline Input">4E</span>
+                    <i class="fa-regular fa-calendar-days text-indigo-400"></i> Target Deadline:
+                </label>
+                <input type="date" 
+                       name="deadline" 
+                       value="{{ todo.deadline or '' }}" 
+                       class="input input-sm input-bordered input-primary text-xs font-mono font-bold bg-slate-900 text-slate-100" />
+            </div>
+
+            <!-- Karma Rating Selector [4F] -->
+            <div class="flex items-center justify-between bg-slate-950/60 p-3 rounded-xl border border-white/10">
+                <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <span class="dev-badge" title="[④.F] Modal Karma Rating (1-5)">4F</span>
+                    <i class="fa-solid fa-star text-amber-400"></i> Karma Score:
+                </label>
+                <select name="karma" class="select select-sm select-bordered select-primary text-xs font-bold bg-slate-900 text-purple-300">
+                    <option value="0" {% if not todo.karma or todo.karma == 0 %}selected{% endif %}>⭐ None</option>
+                    <option value="5" {% if todo.karma == 5 %}selected{% endif %}>⭐ 5/5 (Best)</option>
+                    <option value="4" {% if todo.karma == 4 %}selected{% endif %}>⭐ 4/5 (Great)</option>
+                    <option value="3" {% if todo.karma == 3 %}selected{% endif %}>⭐ 3/5 (Good)</option>
+                    <option value="2" {% if todo.karma == 2 %}selected{% endif %}>⭐ 2/5 (Fair)</option>
+                    <option value="1" {% if todo.karma == 1 %}selected{% endif %}>⭐ 1/5 (Worst)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Description Input [4C] -->
+        <div class="flex flex-col gap-1.5">
+            <label for="task-description-input" class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                <span class="flex items-center gap-1">
+                    <span class="dev-badge" title="[④.C] Notes & Description Input">4C</span>
+                    <span>Task Notes & Description:</span>
+                </span>
+                <span class="text-slate-500 text-[11px]">Auto-saved to database</span>
+            </label>
+            <textarea id="task-description-input"
+                      name="description" 
+                      class="textarea textarea-bordered textarea-primary w-full h-28 font-sans text-sm bg-slate-950/80 text-slate-100 placeholder-slate-500 focus:outline-none" 
+                      placeholder="Add notes, details, links, or sub-steps for this task...">{{ todo.description or '' }}</textarea>
+        </div>
+
+        <!-- Save Details Button [4D] -->
+        <div class="flex items-center justify-end gap-2">
+            <span class="dev-badge" title="[④.D] Save Details Button">4D</span>
+            <button type="submit" class="btn btn-primary btn-sm font-bold gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> Save Details
+            </button>
+        </div>
+    </form>
+
+    <!-- [4G] SUB-TODO CHECKLIST SECTION -->
+    <div class="border-t border-white/10 pt-4 flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                <span class="dev-badge" title="[④.G] Sub-todo Checklist Section">4G</span>
+                <i class="fa-solid fa-list-check text-indigo-400"></i>
+                <span>Sub-task Checklist</span>
+                {% if todo.checklist_info and todo.checklist_info.has_checklist %}
+                <span class="text-[11px] text-slate-400 font-mono font-normal">
+                    ({{ todo.checklist_info.completed_count }}/{{ todo.checklist_info.total }} done)
+                </span>
+                {% endif %}
+            </label>
+            {% if todo.checklist_info and todo.checklist_info.total > 0 %}
+            <progress class="progress progress-primary w-24 h-2" 
+                      value="{{ todo.checklist_info.completed_count }}" 
+                      max="{{ todo.checklist_info.total }}"></progress>
+            {% endif %}
+        </div>
+
+        <!-- Add Sub-task Input Form -->
+        <form hx-post="/task/{{ todo.id }}/checklist/add" 
+              hx-target="#task-detail-content" 
+              hx-on::after-request="this.reset()" 
+              class="flex items-center gap-2">
+            <input type="text" 
+                   name="text" 
+                   class="input input-sm input-bordered input-primary flex-1 bg-slate-950/80 text-xs text-slate-100 placeholder-slate-500" 
+                   placeholder="Add a sub-task or checklist item..." 
+                   required
+                   autocomplete="off">
+            <button type="submit" class="btn btn-sm btn-primary font-bold text-xs gap-1">
+                <i class="fa-solid fa-plus text-xs"></i> Add Sub-task
+            </button>
+        </form>
+
+        <!-- Sub-task Item List -->
+        {% if todo.checklist_info and todo.checklist_info.checklist_items %}
+        <ul class="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
+            {% for item in todo.checklist_info.checklist_items %}
+            <li class="flex items-center justify-between p-2.5 bg-slate-950/60 hover:bg-slate-950/90 rounded-lg border border-white/10 text-xs transition-colors">
+                <div class="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
+                    <input type="checkbox" 
+                           class="checkbox checkbox-xs checkbox-primary border-white/30 checked:border-primary"
+                           {% if item.completed %}checked{% endif %}
+                           hx-post="/task/{{ todo.id }}/checklist/{{ item.id }}/toggle" 
+                           hx-target="#task-detail-content" />
+                    <span class="truncate {% if item.completed %}line-through text-slate-500{% else %}text-slate-200{% endif %}">
+                        {{ item.text }}
+                    </span>
+                </div>
+                <button class="btn btn-ghost btn-xs text-rose-400 hover:bg-rose-500/20"
+                        hx-delete="/task/{{ todo.id }}/checklist/{{ item.id }}/delete"
+                        hx-target="#task-detail-content"
+                        title="Delete sub-task">
+                    <i class="fa-regular fa-trash-can text-xs"></i>
+                </button>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="text-xs text-slate-500 italic py-1 text-center">
+            No sub-tasks created yet. Add one above!
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="text-center py-6 text-slate-400 text-sm">
+    Task not found.
+</div>
+{% endif %}

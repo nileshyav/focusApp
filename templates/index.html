@@ -1,493 +1,746 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="night">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productivity Dashboard - Pomodoro & Todo</title>
-    <!-- HTMX -->
+
+    <!-- HTMX CDN -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <!-- FontAwesome Icons -->
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- DaisyUI CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+
+    <!-- FontAwesome Icons CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Google Fonts -->
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        :root {
-            --bg-color: #0b0f19;
-            --card-bg: rgba(23, 32, 51, 0.75);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --radius-lg: 18px;
-            --radius-md: 10px;
-        }
-
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-color);
             background-image: 
                 radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.12) 0px, transparent 50%);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 30px 20px;
         }
 
-        .header-title {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header-title h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 6px;
-        }
-
-        .header-title p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 28px;
-            width: 100%;
-            max-width: 1100px;
-        }
-
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            padding: 32px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .card-header i {
-            font-size: 1.3rem;
-            color: var(--primary);
-        }
-
-        .card-header h2 {
-            font-size: 1.3rem;
-            font-weight: 700;
-        }
-
-        /* Pomodoro Timer Styles */
-        .pomodoro-card {
-            align-items: center;
-            text-align: center;
-        }
-
-        .mode-selector {
-            display: flex;
-            background: rgba(15, 23, 42, 0.6);
-            padding: 4px;
-            border-radius: 30px;
-            border: 1px solid var(--card-border);
-            margin-bottom: 16px;
-            gap: 4px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .mode-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
+        .timer-digit {
             cursor: pointer;
+            padding: 2px 10px;
+            border-radius: 12px;
+            border: 2px dashed transparent;
             transition: all 0.2s ease;
         }
 
-        .mode-btn.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        .timer-digit:hover {
+            border-color: currentColor;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
         }
 
-        /* Custom Time Input Form */
-        .custom-time-box {
+        .edit-num-input::selection {
+            background: #818cf8;
+            color: #000000;
+        }
+
+        .freeform-card {
+            position: absolute !important;
+            z-index: 20;
+            resize: both !important;
+            overflow: auto !important;
+            min-width: 320px;
+            min-height: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            user-select: none;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* Component Hover Index Badges (Hidden by default; toggled via Header button) */
+        .dev-badge {
             display: none;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
-            background: rgba(15, 23, 42, 0.7);
-            padding: 8px 14px;
-            border-radius: var(--radius-md);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .custom-time-box.show {
-            display: flex;
-        }
-
-        .custom-input {
-            width: 70px;
-            padding: 6px 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.3);
-            color: white;
-            font-size: 0.9rem;
-            text-align: center;
-            outline: none;
-        }
-
-        .btn-set-custom {
-            padding: 6px 14px;
-            border-radius: 6px;
-            border: none;
-            background: var(--primary);
-            color: white;
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .timer-display {
-            font-size: 4.8rem;
+            justify-content: center;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 3.5px;
+            border-radius: 9999px;
+            background: #6366f1;
+            color: #ffffff;
+            font-size: 8.5px;
             font-weight: 800;
-            font-family: monospace;
-            letter-spacing: -2px;
-            margin: 10px 0 24px 0;
-            color: var(--text-main);
-            text-shadow: 0 0 30px rgba(99, 102, 241, 0.25);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            box-shadow: 0 0 6px rgba(99, 102, 241, 0.6);
+            user-select: none;
+            line-height: 1;
+            flex-shrink: 0;
+            cursor: help;
+            transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
         }
 
-        .timer-controls {
-            display: flex;
-            gap: 14px;
-            margin-bottom: 24px;
+        .dev-badge:hover {
+            transform: scale(1.3);
+            background: #4f46e5;
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.9);
         }
 
-        .btn-control {
-            padding: 12px 28px;
-            border-radius: var(--radius-md);
-            border: none;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-start {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
-        }
-
-        .btn-start:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-main);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .session-info {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(15, 23, 42, 0.5);
-            padding: 10px 20px;
-            border-radius: 20px;
-            border: 1px solid var(--card-border);
-        }
-
-        .session-info strong {
-            color: var(--primary);
-        }
-
-        /* Todo Form & List Styles */
-        .todo-form {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .form-input {
-            flex: 1;
-            padding: 12px 16px;
-            border-radius: var(--radius-md);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            background: rgba(15, 23, 42, 0.8);
-            color: white;
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s ease;
-        }
-
-        .form-input:focus {
-            border-color: var(--primary);
-        }
-
-        .btn-add {
-            padding: 12px 20px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: var(--radius-md);
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .btn-add:hover {
-            background: var(--primary-hover);
-        }
-
-        .todo-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            overflow-y: auto;
+        /* Default mode (Freeform OFF): Cap todo-list max height to 420px */
+        #todo-list {
             max-height: 420px;
-            padding-right: 4px;
         }
 
-        .todo-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 16px;
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--card-border);
-            transition: all 0.2s ease;
-        }
-
-        .todo-item:hover {
-            border-color: rgba(255, 255, 255, 0.15);
-            background: rgba(15, 23, 42, 0.85);
-        }
-
-        .todo-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            flex: 1;
-            font-size: 0.95rem;
-        }
-
-        .completed {
-            text-decoration: line-through;
-            color: var(--text-muted);
-        }
-
-        .btn-delete {
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-delete:hover {
-            background: rgba(239, 68, 68, 0.3);
-            color: #fee2e2;
-        }
-
-        .empty-text {
-            text-align: center;
-            color: var(--text-muted);
-            padding: 30px;
-            font-size: 0.95rem;
-        }
-
-        @media (max-width: 860px) {
-            .dashboard-container {
-                grid-template-columns: 1fr;
-            }
+        /* Freeform mode (Freeform ON): Remove max-height cap so list fills card height */
+        .freeform-card #todo-list,
+        body.freeform-active #todo-list {
+            max-height: none !important;
         }
     </style>
 </head>
-<body>
 
-    <header class="header-title">
-        <h1>Focus & Task Workspace</h1>
-        <p>Pomodoro timer on left • FastAPI & HTMX tasks on right</p>
+<body class="bg-slate-950 min-h-screen text-slate-100 p-4 md:p-8 flex flex-col items-center relative overflow-x-hidden">
+
+    <!-- ========================================== -->
+    <!-- [①] HEADER TOOLBAR COMPONENT               -->
+    <!-- ========================================== -->
+    <header class="w-full flex flex-col md:flex-row items-center justify-between gap-4 mb-8 z-10">
+        <div class="text-center md:text-left flex items-center gap-3">
+            <span class="dev-badge text-xs" title="[①] Main Header Toolbar Component">1</span>
+            <div>
+                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-300 to-emerald-400 bg-clip-text text-transparent mb-1">
+                    Focus & Task Workspace
+                </h1>
+                <p class="text-xs md:text-sm text-slate-400">
+                    Pomodoro timer on left • FastAPI & HTMX tasks on right
+                </p>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- [①.D] Performance Report Page Navigation Button -->
+            <div class="flex items-center gap-1">
+                <span class="dev-badge" title="[①.D] Performance Report Page Link">1D</span>
+                <a href="/performance" 
+                   class="btn btn-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border-none shadow-md shadow-indigo-500/20 text-xs gap-2">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Performance Report</span>
+                </a>
+            </div>
+
+            <!-- [①.A] Freeform Mode Toggle Button -->
+            <div class="flex items-center gap-1">
+                <span class="dev-badge" title="[①.A] Freeform Mode Toggle Button">1A</span>
+                <button id="freeform-toggle-btn" 
+                        onclick="toggleFreeformLayout()" 
+                        class="btn btn-sm btn-outline border-white/20 hover:bg-white/10 text-xs gap-2">
+                    <i class="fa-solid fa-up-down-left-right text-indigo-400"></i>
+                    <span id="freeform-btn-text">Freeform Mode: OFF</span>
+                </button>
+            </div>
+
+            <!-- [①.B] UI Theme Selector Dropdown -->
+            <div class="flex items-center gap-2 bg-slate-900/80 p-2 rounded-xl border border-white/10 shadow-lg">
+                <span class="dev-badge" title="[①.B] UI Theme Selector Dropdown">1B</span>
+                <i class="fa-solid fa-palette text-indigo-400"></i>
+                <select id="theme-selector" class="select select-sm select-bordered select-primary text-xs" onchange="changeUITheme(this.value)">
+                    <option value="night">🌙 Night Glass</option>
+                    <option value="dracula">🧛 Dracula Dark</option>
+                    <option value="dim">🌲 Nordic Dim</option>
+                    <option value="cyberpunk">⚡ Cyberpunk Glow</option>
+                    <option value="synthwave">🌆 Synthwave Retro</option>
+                    <option value="emerald">💚 Emerald Mint</option>
+                </select>
+            </div>
+
+            <!-- [①.C] Component Hover Index Toggle Button -->
+            <div class="flex items-center gap-1">
+                <span class="dev-badge" title="[①.C] Component Hover Index Toggle Button">1C</span>
+                <button id="component-index-toggle-btn" 
+                        onclick="toggleComponentIndex()" 
+                        class="btn btn-sm btn-outline border-white/20 hover:bg-white/10 text-xs gap-2"
+                        title="Toggle component hover index numbering badges ON/OFF">
+                    <i class="fa-solid fa-hashtag text-indigo-400"></i>
+                    <span id="component-index-btn-text">Component Index: OFF</span>
+                </button>
+            </div>
+        </div>
     </header>
 
-    <div class="dashboard-container">
-        <!-- LEFT COLUMN: Pomodoro Timer -->
-        <section class="card pomodoro-card">
-            <div class="card-header" style="width: 100%;">
-                <i class="fa-regular fa-clock"></i>
-                <h2>Pomodoro Timer</h2>
+    <!-- ========================================== -->
+    <!-- MAIN WORKSPACE CONTAINER                   -->
+    <!-- ========================================== -->
+    <main id="workspace-container" class="flex flex-col lg:flex-row gap-6 w-[92%] md:w-[80%] mx-auto relative min-h-[600px]">
+        
+        <!-- -------------------------------------- -->
+        <!-- [②] POMODORO TIMER COMPONENT          -->
+        <!-- -------------------------------------- -->
+        <section id="pomodoro-card" class="card bg-slate-900/70 backdrop-blur-xl shadow-2xl border border-white/10 flex-1 p-6 md:p-8 flex flex-col items-center text-center">
+            <div class="drag-handle-bar hidden w-full bg-slate-950/60 p-2 rounded-t-xl mb-4 text-xs text-slate-400 flex items-center justify-between border-b border-white/10">
+                <span class="flex items-center gap-2 font-bold"><i class="fa-solid fa-grip-vertical text-indigo-400"></i> Drag Pomodoro</span>
+                <i class="fa-solid fa-up-down-left-right text-xs opacity-50"></i>
             </div>
 
-            <!-- Modes -->
-            <div class="mode-selector">
-                <button class="mode-btn active" onclick="setMode('focus', 25, this)">Focus (25m)</button>
-                <button class="mode-btn" onclick="setMode('shortBreak', 5, this)">Short Break (5m)</button>
-                <button class="mode-btn" onclick="setMode('longBreak', 15, this)">Long Break (15m)</button>
-                <button class="mode-btn" onclick="toggleCustomMode(this)">Custom ⚙️</button>
+            <div class="flex items-center justify-center gap-3 border-b border-white/10 pb-4 mb-6 w-full">
+                <span class="dev-badge text-xs" title="[②] Pomodoro Timer Component">2</span>
+                <i class="fa-regular fa-clock text-2xl text-indigo-400"></i>
+                <h2 class="text-xl font-bold tracking-wide">Pomodoro Timer</h2>
             </div>
 
-            <!-- Custom Minutes Form -->
-            <div class="custom-time-box" id="custom-box">
-                <label for="custom-minutes" style="font-size: 0.85rem; color: var(--text-muted);">Minutes:</label>
-                <input type="number" id="custom-minutes" class="custom-input" min="1" max="180" value="10">
-                <button class="btn-set-custom" onclick="applyCustomTime()">Apply</button>
+            <!-- [②.A] Active Focus Task Banner -->
+            <div class="alert bg-indigo-500/10 border-indigo-500/30 text-sm py-2 px-4 mb-6 flex items-center justify-between w-full shadow-inner">
+                <div class="flex items-center gap-2">
+                    <span class="dev-badge" title="[②.A] Active Focus Task Banner">2A</span>
+                    <i class="fa-solid fa-bullseye text-indigo-400"></i>
+                    <span>Focusing on: <strong id="active-task-title" class="text-indigo-300 font-bold">None (Click ▶️ on a task)</strong></span>
+                </div>
             </div>
 
-            <!-- Display -->
-            <div class="timer-display" id="timer-display">25:00</div>
+            <!-- [②.B] Mode Selector Buttons -->
+            <div class="flex items-center gap-2 mb-6">
+                <span class="dev-badge" title="[②.B] Mode Selector Buttons">2B</span>
+                <div class="join bg-slate-950/60 p-1.5 rounded-full border border-white/10">
+                    <button id="btn-focus" class="btn btn-sm btn-primary rounded-full join-item font-semibold px-4" onclick="switchMode('focus')">Focus (25m)</button>
+                    <button id="btn-short" class="btn btn-sm btn-ghost rounded-full join-item font-semibold px-4" onclick="switchMode('shortBreak')">Short Break (5m)</button>
+                    <button id="btn-long" class="btn btn-sm btn-ghost rounded-full join-item font-semibold px-4" onclick="switchMode('longBreak')">Long Break (15m)</button>
+                </div>
+            </div>
 
-            <!-- Controls -->
-            <div class="timer-controls">
-                <button class="btn-control btn-start" id="start-btn" onclick="toggleTimer()">
+            <!-- [②.C] Editable Timer Display -->
+            <div class="flex flex-col items-center my-4" id="display-wrapper">
+                <div class="flex items-center gap-2">
+                    <span class="dev-badge" title="[②.C] Clickable / Double-Clickable Timer Display">2C</span>
+                    <div class="font-mono text-6xl md:text-7xl font-extrabold tracking-tighter text-indigo-400 drop-shadow-[0_0_35px_rgba(99,102,241,0.35)] flex items-center gap-1 select-none" id="timer-display">
+                        <span id="digit-mm" class="timer-digit" 
+                              onclick="enableInlineEdit('mm')" 
+                              ondblclick="enableInlineEdit('mm')" 
+                              title="Click or double-click to edit minutes">25</span>
+                        <span class="opacity-60">:</span>
+                        <span id="digit-ss" class="timer-digit" 
+                              onclick="enableInlineEdit('ss')" 
+                              ondblclick="enableInlineEdit('ss')" 
+                              title="Click or double-click to edit seconds">00</span>
+                    </div>
+                </div>
+                <span class="text-xs text-slate-400 mt-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-i-cursor text-indigo-400"></i> Click or double-click numbers to select & edit
+                </span>
+            </div>
+
+            <div class="hidden items-center gap-2 my-4 bg-slate-950 p-4 rounded-2xl border-2 border-indigo-500 shadow-2xl" id="timer-edit-box">
+                <input type="number" id="input-mm" class="input input-bordered input-primary w-24 text-3xl font-mono font-bold text-center edit-num-input" min="0" max="999" value="25" placeholder="MM">
+                <span class="text-3xl font-mono font-bold text-slate-400">:</span>
+                <input type="number" id="input-ss" class="input input-bordered input-primary w-24 text-3xl font-mono font-bold text-center edit-num-input" min="0" max="59" value="00" placeholder="SS">
+                <button class="btn btn-primary btn-sm ml-2 font-bold px-4" onclick="saveInlineEdit()">Set</button>
+            </div>
+
+            <!-- [②.D] Timer Control Buttons -->
+            <div class="flex items-center gap-4 my-6">
+                <span class="dev-badge" title="[②.D] Timer Controls">2D</span>
+                <button class="btn btn-primary font-bold px-8 shadow-lg shadow-indigo-500/30 hover:scale-105 transition-all" id="start-btn" onclick="toggleTimer()">
                     <i class="fa-solid fa-play" id="start-icon"></i> <span id="start-text">Start</span>
                 </button>
-                <button class="btn-control btn-secondary" onclick="resetTimer()">
+                <button class="btn btn-outline border-white/20 font-bold px-6 hover:bg-white/10" onclick="resetTimer()">
                     <i class="fa-solid fa-rotate-left"></i> Reset
                 </button>
             </div>
 
-            <!-- Session Stats -->
-            <div class="session-info">
-                <i class="fa-solid fa-fire"></i> Completed Sessions: <strong id="completed-count">0</strong>
+            <!-- [②.E] Completed Session Stats -->
+            <div class="flex items-center gap-2 mt-auto">
+                <span class="dev-badge" title="[②.E] Completed Sessions Counter">2E</span>
+                <div class="badge badge-lg bg-slate-950/60 border-white/10 py-4 px-6 gap-2 text-sm text-slate-300">
+                    <i class="fa-solid fa-fire text-amber-400"></i> Completed Sessions: <strong id="completed-count" class="text-indigo-400 font-bold">0</strong>
+                </div>
             </div>
         </section>
 
-        <!-- RIGHT COLUMN: Todo List -->
-        <section class="card">
-            <div class="card-header">
-                <i class="fa-solid fa-list-check"></i>
-                <h2>Todo Tasks</h2>
+        <!-- -------------------------------------- -->
+        <!-- [③] TODO TASKS COMPONENT              -->
+        <!-- -------------------------------------- -->
+        <section id="todo-card" class="card bg-slate-900/70 backdrop-blur-xl shadow-2xl border border-white/10 flex-1 p-6 md:p-8 flex flex-col">
+            <div class="drag-handle-bar hidden w-full bg-slate-950/60 p-2 rounded-t-xl mb-4 text-xs text-slate-400 flex items-center justify-between border-b border-white/10">
+                <span class="flex items-center gap-2 font-bold"><i class="fa-solid fa-grip-vertical text-indigo-400"></i> Drag Todo List</span>
+                <i class="fa-solid fa-up-down-left-right text-xs opacity-50"></i>
             </div>
 
-            <form hx-post="/add" 
-                  hx-target="#todo-list" 
-                  hx-on::after-request="this.reset()" 
-                  class="todo-form">
-                <input type="text" 
-                       name="title" 
-                       class="form-input" 
-                       placeholder="Add a new task..." 
-                       required 
-                       autocomplete="off">
-                <button type="submit" class="btn-add">
-                    <i class="fa-solid fa-plus"></i> Add
-                </button>
-            </form>
+            <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="dev-badge text-xs" title="[③] Todo Tasks Component">3</span>
+                    <i class="fa-solid fa-list-check text-2xl text-indigo-400"></i>
+                    <h2 class="text-xl font-bold tracking-wide">Todo Tasks</h2>
+                </div>
 
-            <div id="todo-list">
+                <!-- [③.J] Sort Selector Dropdown -->
+                <div class="flex items-center gap-1.5 bg-slate-950/80 p-1.5 px-3 rounded-xl border border-white/10 shadow-sm">
+                    <span class="dev-badge" title="[③.J] Task Sort Selector">3J</span>
+                    <i class="fa-solid fa-arrow-down-short-wide text-xs text-indigo-400"></i>
+                    <span class="text-xs font-semibold text-slate-300 hidden sm:inline">Sort:</span>
+                    <select name="sort_by" 
+                            id="sort-selector"
+                            class="select select-xs select-ghost text-xs font-bold text-slate-200 focus:outline-none cursor-pointer"
+                            hx-get="/todos"
+                            hx-target="#todo-list"
+                            hx-trigger="change">
+                        <option value="created_at" {% if current_sort == 'created_at' %}selected{% endif %}>📅 Creation Date</option>
+                        <option value="priority" {% if current_sort == 'priority' %}selected{% endif %}>🔥 Priority Label</option>
+                        <option value="deadline" {% if current_sort == 'deadline' %}selected{% endif %}>⏳ Deadline Date</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- [③.A] Add Task Form & Priority Selector -->
+            <div class="flex items-center gap-2 mb-6">
+                <span class="dev-badge" title="[③.A] Add Task Form & Priority Input">3A</span>
+                <form hx-post="/add" 
+                      hx-target="#todo-list" 
+                      hx-on::after-request="this.reset()" 
+                      class="flex flex-wrap sm:flex-nowrap gap-2 flex-1">
+                    <input type="text" 
+                           name="title" 
+                           class="input input-bordered input-primary flex-1 bg-slate-950/60 border-white/15 focus:border-indigo-500" 
+                           placeholder="Add a new task..." 
+                           required 
+                           autocomplete="off">
+                    
+                    <select name="priority" class="select select-bordered select-primary text-xs bg-slate-950/60 font-semibold border-white/15">
+                        <option value="medium" selected>⚡ Medium</option>
+                        <option value="high">🔥 High</option>
+                        <option value="low">🌱 Low</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-primary font-bold px-6 shadow-md shadow-indigo-500/20">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </form>
+            </div>
+
+            <div id="todo-list" 
+                 class="flex-1 overflow-y-auto w-full min-h-[250px] pr-1"
+                 hx-get="/todos" 
+                 hx-trigger="todoListChanged from:body">
                 {% include 'partials/todo_list.html' %}
             </div>
         </section>
-    </div>
 
-    <!-- Pomodoro Logic Script -->
+    </main>
+
+    <!-- ========================================== -->
+    <!-- [④] TASK DETAIL MODAL COMPONENT            -->
+    <!-- ========================================== -->
+    <dialog id="task_detail_modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-slate-900 border border-white/10 shadow-2xl backdrop-blur-2xl text-slate-100 relative">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 text-slate-400 hover:text-white">✕</button>
+            </form>
+            <div id="task-detail-content" class="py-2">
+                <div class="flex flex-col items-center justify-center p-8 gap-3">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                    <span class="text-xs text-slate-400">Loading task details...</span>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+
+    <!-- JAVASCRIPT LOGIC, COMPONENT INDEX TOGGLE & FREEFORM DRAG SYSTEM -->
     <script>
-        let timerInterval = null;
-        let isRunning = false;
-        let currentMode = 'focus';
-        let defaultTime = 25 * 60; // default 25 minutes
-        let timeRemaining = defaultTime;
-        let completedSessions = 0;
+        /* COMPONENT HOVER INDEX TOGGLE */
+        let isComponentIndexActive = localStorage.getItem('component_hover_index_active') === 'true';
 
-        function updateDisplay() {
-            const minutes = Math.floor(timeRemaining / 60);
-            const seconds = timeRemaining % 60;
-            const formatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById('timer-display').innerText = formatted;
-            document.title = `${formatted} - ${currentMode === 'focus' ? 'Focusing' : 'Break'}`;
+        function toggleComponentIndex() {
+            isComponentIndexActive = !isComponentIndexActive;
+            localStorage.setItem('component_hover_index_active', isComponentIndexActive);
+            applyComponentIndexState();
         }
 
-        function setMode(mode, minutes, element) {
-            pauseTimer();
-            currentMode = mode;
-            defaultTime = minutes * 60;
-            timeRemaining = defaultTime;
-            
-            document.getElementById('custom-box').classList.remove('show');
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            if (element) element.classList.add('active');
+        function applyComponentIndexState() {
+            const btn = document.getElementById('component-index-toggle-btn');
+            const btnText = document.getElementById('component-index-btn-text');
 
-            const root = document.documentElement;
-            if (mode === 'focus') {
-                root.style.setProperty('--primary', '#6366f1');
-                root.style.setProperty('--primary-hover', '#4f46e5');
-            } else if (mode === 'shortBreak') {
-                root.style.setProperty('--primary', '#10b981');
-                root.style.setProperty('--primary-hover', '#059669');
-            } else if (mode === 'longBreak') {
-                root.style.setProperty('--primary', '#06b6d4');
-                root.style.setProperty('--primary-hover', '#0891b2');
-            } else if (mode === 'custom') {
-                root.style.setProperty('--primary', '#ec4899');
-                root.style.setProperty('--primary-hover', '#db2777');
+            if (isComponentIndexActive) {
+                document.body.classList.add('show-component-index');
+                if (btn) {
+                    btn.classList.remove('btn-outline');
+                    btn.classList.add('btn-primary');
+                    btnText.innerText = 'Component Index: ON';
+                }
+            } else {
+                document.body.classList.remove('show-component-index');
+                if (btn) {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline');
+                    btnText.innerText = 'Component Index: OFF';
+                }
             }
+        }
 
+        applyComponentIndexState();
+
+        /* FREEFORM DRAG SYSTEM */
+        let isFreeform = false;
+
+        const savedFreeform = localStorage.getItem('pomodoro_freeform_active');
+        if (savedFreeform === 'true') {
+            isFreeform = true;
+        }
+
+        function toggleFreeformLayout() {
+            isFreeform = !isFreeform;
+            localStorage.setItem('pomodoro_freeform_active', isFreeform);
+            applyLayoutState();
+        }
+
+        function applyLayoutState() {
+            const btn = document.getElementById('freeform-toggle-btn');
+            const btnText = document.getElementById('freeform-btn-text');
+            const pCard = document.getElementById('pomodoro-card');
+            const tCard = document.getElementById('todo-card');
+            const dragBars = document.querySelectorAll('.drag-handle-bar');
+
+            if (isFreeform) {
+                document.body.classList.add('freeform-active');
+                btn.classList.remove('btn-outline');
+                btn.classList.add('btn-primary');
+                btnText.innerText = 'Freeform Mode: ON';
+
+                dragBars.forEach(bar => bar.classList.remove('hidden'));
+                
+                pCard.classList.add('freeform-card');
+                tCard.classList.add('freeform-card');
+
+                const savedPos = localStorage.getItem('pomodoro_freeform_positions');
+                if (savedPos) {
+                    try {
+                        const pos = JSON.parse(savedPos);
+                        if (pos.pCard) {
+                            pCard.style.left = pos.pCard.left;
+                            pCard.style.top = pos.pCard.top;
+                            pCard.style.width = pos.pCard.width;
+                            pCard.style.height = pos.pCard.height;
+                        }
+                        if (pos.tCard) {
+                            tCard.style.left = pos.tCard.left;
+                            tCard.style.top = pos.tCard.top;
+                            tCard.style.width = pos.tCard.width;
+                            tCard.style.height = pos.tCard.height;
+                        }
+                    } catch (e) {}
+                } else {
+                    pCard.style.left = '40px';
+                    pCard.style.top = '120px';
+                    pCard.style.width = '460px';
+                    
+                    tCard.style.left = '530px';
+                    tCard.style.top = '120px';
+                    tCard.style.width = '480px';
+                }
+
+                makeCardDraggable(pCard);
+                makeCardDraggable(tCard);
+
+            } else {
+                document.body.classList.remove('freeform-active');
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline');
+                btnText.innerText = 'Freeform Mode: OFF';
+
+                dragBars.forEach(bar => bar.classList.add('hidden'));
+
+                pCard.classList.remove('freeform-card');
+                tCard.classList.remove('freeform-card');
+
+                pCard.style.left = '';
+                pCard.style.top = '';
+                pCard.style.width = '';
+                pCard.style.height = '';
+
+                tCard.style.left = '';
+                tCard.style.top = '';
+                tCard.style.width = '';
+                tCard.style.height = '';
+            }
+        }
+
+        function saveFreeformPositions() {
+            if (!isFreeform) return;
+            const pCard = document.getElementById('pomodoro-card');
+            const tCard = document.getElementById('todo-card');
+
+            const positions = {
+                pCard: {
+                    left: pCard.style.left,
+                    top: pCard.style.top,
+                    width: pCard.style.width,
+                    height: pCard.style.height
+                },
+                tCard: {
+                    left: tCard.style.left,
+                    top: tCard.style.top,
+                    width: tCard.style.width,
+                    height: tCard.style.height
+                }
+            };
+            localStorage.setItem('pomodoro_freeform_positions', JSON.stringify(positions));
+        }
+
+        function makeCardDraggable(card) {
+            const dragBar = card.querySelector('.drag-handle-bar');
+            if (!dragBar) return;
+
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+
+            dragBar.onmousedown = function (e) {
+                if (!isFreeform) return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+
+                initialLeft = card.offsetLeft;
+                initialTop = card.offsetTop;
+
+                card.style.zIndex = 30;
+
+                document.onmousemove = function (e) {
+                    if (!isDragging) return;
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+
+                    card.style.left = (initialLeft + dx) + 'px';
+                    card.style.top = (initialTop + dy) + 'px';
+                };
+
+                document.onmouseup = function () {
+                    if (isDragging) {
+                        isDragging = false;
+                        document.onmousemove = null;
+                        document.onmouseup = null;
+                        card.style.zIndex = 20;
+                        saveFreeformPositions();
+                    }
+                };
+            };
+        }
+
+        const resizeObserver = new ResizeObserver(() => {
+            if (isFreeform) {
+                saveFreeformPositions();
+            }
+        });
+        resizeObserver.observe(document.getElementById('pomodoro-card'));
+        resizeObserver.observe(document.getElementById('todo-card'));
+
+        applyLayoutState();
+
+        /* TIMER LOGIC */
+        let timerInterval = null;
+        let isRunning = false;
+
+        let activeTaskId = null;
+        let activeTaskTitle = 'None (Click ▶️ on a task)';
+        let secondsTrackedForActiveTask = 0;
+
+        const defaultDurations = {
+            focus: 25 * 60,
+            shortBreak: 5 * 60,
+            longBreak: 15 * 60
+        };
+
+        let modeDurations = { ...defaultDurations };
+        const savedDurations = localStorage.getItem('pomodoro_mode_durations');
+        if (savedDurations) {
+            try {
+                const parsed = JSON.parse(savedDurations);
+                if (parsed.focus) modeDurations.focus = parsed.focus;
+                if (parsed.shortBreak) modeDurations.shortBreak = parsed.shortBreak;
+                if (parsed.longBreak) modeDurations.longBreak = parsed.longBreak;
+            } catch (e) {}
+        }
+
+        let currentMode = localStorage.getItem('pomodoro_current_mode') || 'focus';
+        let timeRemaining = modeDurations[currentMode] || modeDurations.focus;
+
+        let completedSessions = parseInt(localStorage.getItem('pomodoro_completed_sessions') || '0', 10);
+        document.getElementById('completed-count').innerText = completedSessions;
+
+        const savedTheme = localStorage.getItem('pomodoro_ui_theme') || 'night';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.getElementById('theme-selector').value = savedTheme;
+
+        function changeUITheme(themeName) {
+            document.documentElement.setAttribute('data-theme', themeName);
+            localStorage.setItem('pomodoro_ui_theme', themeName);
+        }
+
+        function saveStateToLocalStorage() {
+            localStorage.setItem('pomodoro_mode_durations', JSON.stringify(modeDurations));
+            localStorage.setItem('pomodoro_current_mode', currentMode);
+            localStorage.setItem('pomodoro_completed_sessions', completedSessions);
+        }
+
+        function toggleTaskTimer(id, title) {
+            if (activeTaskId !== id) {
+                flushTrackedTime();
+                activeTaskId = id;
+                activeTaskTitle = title;
+                document.getElementById('active-task-title').innerText = title;
+                
+                if (currentMode !== 'focus') {
+                    switchMode('focus');
+                }
+                
+                if (!isRunning) {
+                    startTimer();
+                } else {
+                    updateTaskPlayButtonsUI();
+                }
+            } else {
+                toggleTimer();
+            }
+        }
+
+        function updateTaskPlayButtonsUI() {
+            document.querySelectorAll('.btn-task-play').forEach(btn => {
+                btn.classList.remove('btn-error');
+                btn.classList.add('btn-success');
+                btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                btn.title = "Start timer for this task";
+            });
+
+            if (activeTaskId) {
+                const activeBtn = document.getElementById(`btn-play-${activeTaskId}`);
+                if (activeBtn) {
+                    if (isRunning) {
+                        activeBtn.classList.remove('btn-success');
+                        activeBtn.classList.add('btn-error');
+                        activeBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                        activeBtn.title = "Pause timer";
+                    } else {
+                        activeBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                    }
+                }
+            }
+        }
+
+        function flushTrackedTime() {
+            if (activeTaskId && secondsTrackedForActiveTask > 0) {
+                const secondsToSend = secondsTrackedForActiveTask;
+                secondsTrackedForActiveTask = 0;
+
+                htmx.ajax('POST', `/log-time/${activeTaskId}`, {
+                    values: { seconds: secondsToSend },
+                    target: '#todo-list'
+                });
+            }
+        }
+
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return {
+                mm: minutes.toString().padStart(2, '0'),
+                ss: seconds.toString().padStart(2, '0'),
+                text: `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+            };
+        }
+
+        function updateDisplay() {
+            const formatted = formatTime(timeRemaining);
+            document.getElementById('digit-mm').innerText = formatted.mm;
+            document.getElementById('digit-ss').innerText = formatted.ss;
+            document.title = `${formatted.text} - ${currentMode === 'focus' ? 'Focusing' : 'Break'}`;
+        }
+
+        function updateModeButtonsUI() {
+            document.getElementById('btn-focus').innerText = `Focus (${Math.floor(modeDurations.focus / 60)}m)`;
+            document.getElementById('btn-short').innerText = `Short Break (${Math.floor(modeDurations.shortBreak / 60)}m)`;
+            document.getElementById('btn-long').innerText = `Long Break (${Math.floor(modeDurations.longBreak / 60)}m)`;
+            
+            document.querySelectorAll('.join-item').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-ghost');
+            });
+            
+            const activeBtn = currentMode === 'focus' ? document.getElementById('btn-focus') :
+                             currentMode === 'shortBreak' ? document.getElementById('btn-short') :
+                             document.getElementById('btn-long');
+            
+            if (activeBtn) {
+                activeBtn.classList.remove('btn-ghost');
+                activeBtn.classList.add('btn-primary');
+            }
+        }
+
+        function switchMode(mode) {
+            pauseTimer();
+            cancelInlineEdit();
+            currentMode = mode;
+            timeRemaining = modeDurations[mode];
+
+            saveStateToLocalStorage();
+            updateModeButtonsUI();
             updateDisplay();
         }
 
-        function toggleCustomMode(element) {
-            const customBox = document.getElementById('custom-box');
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-            customBox.classList.add('show');
-            applyCustomTime();
+        function enableInlineEdit(targetUnit = 'mm') {
+            if (isRunning) {
+                pauseTimer();
+            }
+            
+            const currentFormatted = formatTime(timeRemaining);
+            document.getElementById('input-mm').value = currentFormatted.mm;
+            document.getElementById('input-ss').value = currentFormatted.ss;
+            
+            document.getElementById('display-wrapper').classList.add('hidden');
+            document.getElementById('timer-edit-box').classList.remove('hidden');
+            document.getElementById('timer-edit-box').classList.add('flex');
+
+            const targetInput = targetUnit === 'ss' ? document.getElementById('input-ss') : document.getElementById('input-mm');
+            
+            setTimeout(() => {
+                targetInput.focus();
+                targetInput.select();
+            }, 50);
         }
 
-        function applyCustomTime() {
-            const minutesInput = document.getElementById('custom-minutes');
-            let mins = parseInt(minutesInput.value, 10);
-            if (isNaN(mins) || mins < 1) mins = 1;
-            if (mins > 180) mins = 180;
-            minutesInput.value = mins;
+        function saveInlineEdit() {
+            let mm = parseInt(document.getElementById('input-mm').value, 10);
+            let ss = parseInt(document.getElementById('input-ss').value, 10);
 
-            setMode('custom', mins, document.querySelector('.mode-btn:last-child'));
-            document.getElementById('custom-box').classList.add('show');
+            if (isNaN(mm) || mm < 0) mm = 0;
+            if (isNaN(ss) || ss < 0) ss = 0;
+            if (ss > 59) ss = 59;
+            
+            const newTotalSeconds = (mm * 60) + ss;
+            if (newTotalSeconds > 0) {
+                modeDurations[currentMode] = newTotalSeconds;
+                timeRemaining = newTotalSeconds;
+            }
+
+            saveStateToLocalStorage();
+            cancelInlineEdit();
+            updateModeButtonsUI();
+            updateDisplay();
         }
+
+        function cancelInlineEdit() {
+            document.getElementById('timer-edit-box').classList.remove('flex');
+            document.getElementById('timer-edit-box').classList.add('hidden');
+            document.getElementById('display-wrapper').classList.remove('hidden');
+        }
+
+        document.getElementById('input-mm').addEventListener('keyup', (e) => { if (e.key === 'Enter') saveInlineEdit(); });
+        document.getElementById('input-ss').addEventListener('keyup', (e) => { if (e.key === 'Enter') saveInlineEdit(); });
 
         function toggleTimer() {
             if (isRunning) {
@@ -498,21 +751,43 @@
         }
 
         function startTimer() {
+            cancelInlineEdit();
             if (isRunning) return;
             isRunning = true;
             document.getElementById('start-text').innerText = 'Pause';
             document.getElementById('start-icon').className = 'fa-solid fa-pause';
+            updateTaskPlayButtonsUI();
 
             timerInterval = setInterval(() => {
                 if (timeRemaining > 0) {
                     timeRemaining--;
+                    
+                    if (currentMode === 'focus' && activeTaskId) {
+                        secondsTrackedForActiveTask++;
+                        
+                        const timeSpan = document.getElementById(`task-time-text-${activeTaskId}`);
+                        if (timeSpan) {
+                            const initialSecs = parseInt(timeSpan.getAttribute('data-seconds') || '0', 10);
+                            const totalSecs = initialSecs + secondsTrackedForActiveTask;
+                            const m = Math.floor(totalSecs / 60);
+                            const s = totalSecs % 60;
+                            timeSpan.innerText = m >= 1 ? `${m}m ${s}s` : `${s}s`;
+                        }
+
+                        if (secondsTrackedForActiveTask >= 15) {
+                            flushTrackedTime();
+                        }
+                    }
+
                     updateDisplay();
                 } else {
                     pauseTimer();
-                    if (currentMode === 'focus' || currentMode === 'custom') {
+                    flushTrackedTime();
+                    if (currentMode === 'focus') {
                         completedSessions++;
                         document.getElementById('completed-count').innerText = completedSessions;
-                        alert('🎉 Timer completed!');
+                        saveStateToLocalStorage();
+                        alert(`🎉 Focus session completed for "${activeTaskTitle}"!`);
                     } else {
                         alert('⏰ Break is over!');
                     }
@@ -526,14 +801,24 @@
             clearInterval(timerInterval);
             document.getElementById('start-text').innerText = 'Start';
             document.getElementById('start-icon').className = 'fa-solid fa-play';
+            updateTaskPlayButtonsUI();
+            flushTrackedTime();
         }
 
         function resetTimer() {
             pauseTimer();
-            timeRemaining = defaultTime;
+            cancelInlineEdit();
+            timeRemaining = modeDurations[currentMode];
             updateDisplay();
         }
 
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.id === 'todo-list') {
+                updateTaskPlayButtonsUI();
+            }
+        });
+
+        updateModeButtonsUI();
         updateDisplay();
     </script>
 </body>

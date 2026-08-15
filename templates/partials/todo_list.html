@@ -1,15 +1,147 @@
-<ul class="todo-list">
+<!-- Task List Container -->
+<ul class="flex flex-col gap-3">
     {% for todo in todos %}
-    <li class="todo-item">
-        <div class="todo-content" hx-post="/toggle/{{ todo.id }}" hx-target="#todo-list">
-            <span>{% if todo.completed %}✅{% else %}⭕{% endif %}</span>
-            <span class="{% if todo.completed %}completed{% endif %}">{{ todo.title }}</span>
+    <li class="flex items-center justify-between p-4 bg-slate-900/60 hover:bg-slate-900/90 rounded-xl border border-white/10 hover:border-white/20 transition-all shadow-md group" 
+        id="todo-item-{{ todo.id }}">
+        
+        <!-- Task Checkbox & Title Block -->
+        <div class="flex items-start gap-3 flex-1 overflow-hidden pr-2">
+            <!-- [③.B] Task Checkbox -->
+            <div class="flex items-center mt-1">
+                <span class="dev-badge" title="[③.B] Task Checkbox">3B</span>
+                <input type="checkbox" 
+                       class="checkbox checkbox-primary checkbox-sm border-white/30 checked:border-primary transition-all duration-200" 
+                       {% if todo.completed %}checked{% endif %}
+                       hx-post="/toggle/{{ todo.id }}" 
+                       hx-target="#todo-list" />
+            </div>
+            
+            <!-- Title & Metadata Labels Below Title (Priority, Deadline, Karma & Checklist Display) -->
+            <div class="flex flex-col items-start gap-1.5 min-w-0 flex-1">
+                <!-- [③.C] Task Title (Click to open description modal) -->
+                <div class="flex items-start gap-1.5 flex-wrap w-full">
+                    <span class="font-medium text-sm md:text-base transition-all select-none cursor-pointer flex items-start gap-1.5 break-all sm:break-words whitespace-normal leading-snug flex-1 min-w-0 {% if todo.completed %}line-through text-slate-400{% else %}text-slate-100 hover:text-indigo-300{% endif %}"
+                          hx-get="/task/{{ todo.id }}/details" 
+                          hx-target="#task-detail-content" 
+                          onclick="task_detail_modal.showModal()"
+                          title="[③.C] Click title to view & edit details">
+                        <span class="dev-badge mt-0.5" title="[③.C] Task Title Click Trigger">3C</span>
+                        <span class="break-all sm:break-words">{{ todo.title }}</span>
+                    </span>
+
+                    {% if todo.description %}
+                        <i class="fa-solid fa-align-left text-xs text-indigo-400 opacity-80 flex-shrink-0" title="Has notes & description"></i>
+                    {% endif %}
+
+                    <!-- Sub-todo Checklist Indicator Badge on Component 3 -->
+                    {% if todo.checklist_info and todo.checklist_info.has_checklist %}
+                        <span class="badge badge-xs text-[10px] font-semibold gap-1 py-1 px-1.5 border rounded bg-indigo-500/20 text-indigo-300 border-indigo-500/40 cursor-pointer"
+                              hx-get="/task/{{ todo.id }}/details" 
+                              hx-target="#task-detail-content" 
+                              onclick="task_detail_modal.showModal()"
+                              title="Sub-tasks checklist: {{ todo.checklist_info.completed_count }}/{{ todo.checklist_info.total }} done">
+                            <i class="fa-solid fa-list-check text-[9px]"></i> {{ todo.checklist_info.completed_count }}/{{ todo.checklist_info.total }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Sub-row: Priority [③.D], Days Remaining [③.H], and Read-only Karma Display [③.I] -->
+                <div class="flex flex-wrap items-center gap-2" onclick="event.stopPropagation()">
+                    <!-- [③.D] Priority Label Below Title -->
+                    <div class="flex items-center gap-1">
+                        <span class="dev-badge" title="[③.D] Task Priority Selector">3D</span>
+                        <select name="priority" 
+                                class="select select-ghost select-xs text-[11px] font-bold h-6 min-h-0 px-2 py-0 border rounded-md cursor-pointer transition-all
+                                       {% if todo.priority == 'high' %}bg-rose-500/20 border-rose-500/40 text-rose-300 hover:bg-rose-500/30{% elif todo.priority == 'low' %}bg-emerald-500/20 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30{% else %}bg-amber-500/20 border-amber-500/40 text-amber-300 hover:bg-amber-500/30{% endif %}"
+                                hx-post="/update-priority/{{ todo.id }}" 
+                                hx-target="#todo-list"
+                                hx-trigger="change"
+                                title="Click to change priority instantly">
+                            <option value="high" {% if todo.priority == 'high' %}selected{% endif %}>🔥 High</option>
+                            <option value="medium" {% if not todo.priority or todo.priority == 'medium' %}selected{% endif %}>⚡ Medium</option>
+                            <option value="low" {% if todo.priority == 'low' %}selected{% endif %}>🌱 Low</option>
+                        </select>
+                    </div>
+
+                    <!-- [③.H] Days Remaining Deadline Badge Below Title -->
+                    <div class="flex items-center gap-1">
+                        <span class="dev-badge" title="[③.H] Deadline Days Remaining Badge">3H</span>
+                        <div class="relative group/deadline">
+                            <label class="badge badge-xs text-[11px] font-semibold gap-1.5 h-6 px-2 py-0 border rounded-md cursor-pointer transition-all {{ todo.deadline_info.class }}"
+                                   title="Click to pick or change deadline date">
+                                <i class="fa-regular fa-calendar-days text-[10px]"></i>
+                                <span>{{ todo.deadline_info.text }}</span>
+                                <input type="date" 
+                                       name="deadline" 
+                                       value="{{ todo.deadline or '' }}" 
+                                       class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                       hx-post="/update-deadline/{{ todo.id }}" 
+                                       hx-target="#todo-list" 
+                                       hx-trigger="change" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- [③.I] Read-only Karma Score Display Badge Below Title -->
+                    {% if todo.karma and todo.karma > 0 %}
+                    <div class="flex items-center gap-1">
+                        <span class="dev-badge" title="[③.I] Read-only Karma Score Display">3I</span>
+                        <span class="badge badge-xs text-[11px] font-semibold gap-1 h-6 px-2 py-0 border rounded-md bg-purple-500/20 text-purple-300 border-purple-500/40"
+                              title="Karma Score: {{ todo.karma }}/5 (Edit in Task Description Modal)">
+                            <i class="fa-solid fa-star text-[10px] text-amber-400"></i> Karma: {{ todo.karma }}/5
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <button class="btn-delete" hx-delete="/delete/{{ todo.id }}" hx-target="#todo-list">
-            Delete
-        </button>
+
+        <!-- Right Controls: Time Badge, Play Icon, Delete Button -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <!-- [③.E] Time Spent Badge -->
+            <div class="flex items-center gap-1">
+                <span class="dev-badge" title="[③.E] Focus Time Badge">3E</span>
+                <div class="badge badge-primary badge-outline text-xs gap-1 py-3 px-3 font-mono border-primary/40 bg-primary/10 text-indigo-300" 
+                     id="task-time-badge-{{ todo.id }}" 
+                     title="Total focus time spent">
+                    <i class="fa-regular fa-clock text-xs"></i>
+                    <span id="task-time-text-{{ todo.id }}" data-seconds="{{ todo.time_spent }}">
+                        {% if todo.time_spent >= 60 %}
+                            {{ todo.time_spent // 60 }}m {{ todo.time_spent % 60 }}s
+                        {% else %}
+                            {{ todo.time_spent }}s
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- [③.F] Start / Pause Task Timer Button (Play Icon) -->
+            <div class="flex items-center gap-1">
+                <span class="dev-badge" title="[③.F] Task Play/Pause Button">3F</span>
+                <button type="button" 
+                        class="btn btn-circle btn-sm btn-success btn-task-play text-xs shadow-md shadow-emerald-500/20 hover:scale-105 transition-transform" 
+                        id="btn-play-{{ todo.id }}"
+                        onclick="toggleTaskTimer({{ todo.id }}, '{{ todo.title|replace("'", "\\'") }}')" 
+                        title="Start timer for this task">
+                    <i class="fa-solid fa-play"></i>
+                </button>
+            </div>
+
+            <!-- [③.G] Delete Task Button -->
+            <div class="flex items-center gap-1">
+                <span class="dev-badge" title="[③.G] Delete Task Button">3G</span>
+                <button class="btn btn-square btn-sm btn-ghost text-rose-400 hover:bg-rose-500/20 hover:text-rose-200 transition-colors" 
+                        hx-delete="/delete/{{ todo.id }}" 
+                        hx-target="#todo-list"
+                        title="Delete task">
+                    <i class="fa-regular fa-trash-can"></i>
+                </button>
+            </div>
+        </div>
     </li>
     {% else %}
-    <li class="empty-text">No tasks available. Add one above!</li>
+    <li class="text-center py-10 text-slate-400 text-sm italic">
+        No tasks available. Add one above to get started!
+    </li>
     {% endfor %}
 </ul>
