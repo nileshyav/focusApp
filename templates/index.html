@@ -94,6 +94,11 @@
             box-shadow: 0 0 12px rgba(99, 102, 241, 0.9);
         }
 
+        /* Active Component Hover Index displays all badges */
+        body.show-component-index .dev-badge {
+            display: inline-flex !important;
+        }
+
         /* Default mode (Freeform OFF): Cap todo-list max height to 420px */
         #todo-list {
             max-height: 420px;
@@ -161,17 +166,6 @@
                 </select>
             </div>
 
-            <!-- [①.C] Component Hover Index Toggle Button -->
-            <div class="flex items-center gap-1">
-                <span class="dev-badge" title="[①.C] Component Hover Index Toggle Button">1C</span>
-                <button id="component-index-toggle-btn" 
-                        onclick="toggleComponentIndex()" 
-                        class="btn btn-sm btn-outline border-white/20 hover:bg-white/10 text-xs gap-2"
-                        title="Toggle component hover index numbering badges ON/OFF">
-                    <i class="fa-solid fa-hashtag text-indigo-400"></i>
-                    <span id="component-index-btn-text">Component Index: OFF</span>
-                </button>
-            </div>
         </div>
     </header>
 
@@ -331,6 +325,28 @@
         </section>
 
     </main>
+
+    <!-- ========================================== -->
+    <!-- FOOTER COMPONENT WITH COMPONENT INDEX TOGGLE -->
+    <!-- ========================================== -->
+    <footer class="w-full mt-auto py-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400 px-4">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-bolt text-indigo-400"></i>
+            <span>Productivity Dashboard & Analytics</span>
+        </div>
+
+        <!-- [①.C] Component Hover Index Toggle Button in Footer -->
+        <div class="flex items-center gap-1">
+            <span class="dev-badge" title="[①.C] Component Hover Index Toggle Button">1C</span>
+            <button id="component-index-toggle-btn" 
+                    onclick="toggleComponentIndex()" 
+                    class="btn btn-sm btn-outline border-white/20 hover:bg-white/10 text-xs gap-2"
+                    title="Toggle component hover index numbering badges ON/OFF">
+                <i class="fa-solid fa-hashtag text-indigo-400"></i>
+                <span id="component-index-btn-text">Component Index: OFF</span>
+            </button>
+        </div>
+    </footer>
 
     <!-- ========================================== -->
     <!-- [④] TASK DETAIL MODAL COMPONENT            -->
