@@ -22,3 +22,9 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# Ensure all domain models are registered with Base.registry
+import app.todos.models  # noqa: E402
+import app.pomodoro.models  # noqa: E402
+

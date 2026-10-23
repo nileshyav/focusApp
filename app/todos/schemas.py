@@ -1,7 +1,33 @@
+"""
+Todo domain Pydantic validation and serialization schemas.
+"""
+
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, Field
-from app.schemas.checklist import ChecklistItemRead
+
+
+class ChecklistItemBase(BaseModel):
+    text: str
+    completed: bool = False
+
+
+class ChecklistItemCreate(ChecklistItemBase):
+    pass
+
+
+class ChecklistItemUpdate(BaseModel):
+    text: Optional[str] = None
+    completed: Optional[bool] = None
+
+
+class ChecklistItemRead(ChecklistItemBase):
+    id: int
+    todo_id: int
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class TodoBase(BaseModel):
     title: str
@@ -10,8 +36,10 @@ class TodoBase(BaseModel):
     deadline: Optional[str] = ""
     karma: int = Field(default=0, ge=0, le=5)
 
+
 class TodoCreate(TodoBase):
     pass
+
 
 class TodoUpdate(BaseModel):
     title: Optional[str] = None
@@ -21,6 +49,7 @@ class TodoUpdate(BaseModel):
     karma: Optional[int] = None
     completed: Optional[bool] = None
     time_spent: Optional[int] = None
+
 
 class TodoRead(TodoBase):
     id: int

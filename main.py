@@ -1,6 +1,6 @@
 """
 Application Entrypoint.
-Imports FastAPI instance from app.main and runs Uvicorn server.
+Imports FastAPI app from app.main and launches Uvicorn server.
 """
 
 import uvicorn

@@ -1,13 +1,20 @@
+"""
+Pomodoro domain Pydantic validation and serialization schemas.
+"""
+
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class PomodoroSessionBase(BaseModel):
-    duration_minutes: int = 25
+    duration_minutes: int = Field(default=25, ge=1, le=180)
     todo_id: Optional[int] = None
+
 
 class PomodoroSessionCreate(PomodoroSessionBase):
     pass
+
 
 class PomodoroSessionRead(PomodoroSessionBase):
     id: int

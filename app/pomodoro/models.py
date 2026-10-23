@@ -1,6 +1,12 @@
-from sqlalchemy import Column, BigInteger, String, Integer, ForeignKey, DateTime, func
+"""
+Pomodoro domain SQLAlchemy ORM models.
+"""
+
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
+
 from app.core.database import Base
+
 
 class PomodoroSession(Base):
     __tablename__ = "pomodoro_sessions"

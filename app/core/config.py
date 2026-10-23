@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "FastAPI + HTMX Todo Analytics App"
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./todos.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://myapp:dev-password@127.0.0.1:5432/myapp_dev")
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
 
