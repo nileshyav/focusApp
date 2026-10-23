@@ -1,0 +1,48 @@
+# ==============================================================================
+# .dockerignore
+# ==============================================================================
+
+# Git & Version Control
+.git
+.gitignore
+
+# Environment & Secrets (NEVER bake credentials into container images; pass at runtime)
+.env
+.env.*
+*.env
+
+# Python Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Docker and CI/CD Pipeline Artifacts
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+Jenkinsfile*
+
+# Documentation & Guidelines
+README.md
+AGENT_RULES.md
+CONTEXT.md
+
+# IDE & OS Temporary Files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
