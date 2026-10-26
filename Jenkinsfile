@@ -6,12 +6,10 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Prepare') {
             steps {
-                // Stage 1: Checkout from GitHub using Jenkins Git plugin
-                git branch: env.BRANCH, url: env.REPO_URL
-
                 script {
+                    // Extract short Git commit hash from the repository checked out by Jenkins
                     env.GIT_COMMIT_SHORT = sh(
                         script: 'git rev-parse --short HEAD',
                         returnStdout: true
