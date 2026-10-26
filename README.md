@@ -247,6 +247,7 @@ The pipeline defined in [`Jenkinsfile`](file:///home/nilesh/work/code_side/AI_pr
 [Stage 2: Build Image]        -> Builds multi-stage Docker image tagged with commit hash & latest
 [Stage 3: Push to DockerHub]  -> Authenticates & pushes images to Docker Hub
 [Stage 4: Update Manifest]    -> Updates k8s/deployment.yaml with commit hash and pushes to GitHub with [skip ci]
+[Post: Cleanup]               -> Deletes local Docker images and dangling layers to save disk space
 [Argo CD]                     -> Detects Git change & triggers zero-downtime rolling update
 ```
 

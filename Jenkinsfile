@@ -74,4 +74,15 @@ pipeline {
             }
         }
     }
+
+    post {
+        always {
+            // Post Cleanup: Remove local Docker images and dangling layers to save disk space
+            sh """
+                docker rmi ${DOCKER_IMAGE}:${GIT_COMMIT_SHORT} || true
+                docker rmi ${DOCKER_IMAGE}:latest || true
+                docker image prune -f || true
+            """
+        }
+    }
 }
