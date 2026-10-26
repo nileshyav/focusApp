@@ -18,7 +18,7 @@ spec:
         - name: dockerhub-registry-secret
       containers:
         - name: todoapp
-          image: inilesh/todoapp:44b89bf
+          image: inilesh/todoapp:8d9d776
           imagePullPolicy: Always
           ports:
             - name: http
