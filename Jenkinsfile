@@ -67,7 +67,7 @@ pipeline {
 
                             git add k8s/deployment.yaml
                             git commit -m "ci: update deployment image tag to ${GIT_COMMIT_SHORT} [skip ci]" || echo "No changes to commit"
-                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:master
+                            git push https://${GIT_USER_NAME}:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:master
                         """
                     }
                 }
