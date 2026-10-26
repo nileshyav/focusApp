@@ -48,5 +48,30 @@ pipeline {
                 }
             }
         }
+
+        stage('Update Manifest in Git') {
+            environment {
+                GIT_REPO_NAME = 'focusApp'
+                GIT_USER_NAME = 'nileshyav'
+            }
+            steps {
+                script {
+                    // Stage 4: Update image tag in k8s/deployment.yaml and push to GitHub for Argo CD
+                    withCredentials([string(credentialsId: 'github_secret', variable: 'GITHUB_TOKEN')]) {
+                        sh """
+                            git config user.email "nileshyaduvanshi@outlook.com"
+                            git config user.name "${GIT_USER_NAME}"
+
+                            # Replace existing image tag with the new immutable commit hash
+                            sed -i "s|image: ${DOCKER_IMAGE}:.*|image: ${DOCKER_IMAGE}:${GIT_COMMIT_SHORT}|" k8s/deployment.yaml
+
+                            git add k8s/deployment.yaml
+                            git commit -m "ci: update deployment image tag to ${GIT_COMMIT_SHORT} [skip ci]" || echo "No changes to commit"
+                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:master
+                        """
+                    }
+                }
+            }
+        }
     }
 }
