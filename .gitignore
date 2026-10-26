@@ -15,4 +15,6 @@ wheels/
 # Database files
 *.db
 todos.db
-k8s
+
+# Temporary directory
+argocd/
