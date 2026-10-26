@@ -2,8 +2,6 @@ pipeline {
     agent any
 
     environment {
-        REPO_URL     = 'https://github.com/nileshyav/focusApp.git'
-        BRANCH       = 'master'
         DOCKER_IMAGE = 'inilesh/todoapp'
     }
 
