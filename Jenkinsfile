@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'inilesh/todoapp'
+        DOCKER_BUILDKIT = '1'
+        DOCKER_IMAGE    = 'inilesh/todoapp'
     }
 
     stages {
